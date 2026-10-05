@@ -2,6 +2,13 @@ html {
   font-size: 14px;
 }
 
+:root {
+  --aerolink-navy: #101927;
+  --aerolink-canvas: #f3f6f8;
+  --aerolink-accent: #11B981;
+  --aerolink-eyebrow: #0e6b5c;
+}
+
 @media (min-width: 768px) {
   html {
     font-size: 16px;
@@ -19,6 +26,112 @@ html {
 
 body {
   margin-bottom: 60px;
+  background: #f3f6f8;
+  color: var(--aerolink-navy);
+}
+
+.site-header {
+  background: var(--aerolink-navy);
+  margin-bottom: 2rem;
+}
+
+.site-header .navbar-brand {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.site-header .navbar-text {
+  color: #fff;
+  font-weight: 400;
+}
+
+.btn-sign-in {
+  background: var(--aerolink-accent);
+  border: 0;
+  color: var(--aerolink-navy);
+  font-weight: 400;
+}
+
+.btn-sign-in:hover,
+.btn-sign-in:focus {
+  background: var(--aerolink-accent);
+  color: var(--aerolink-navy);
+}
+
+.btn-header {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.btn-header:hover,
+.btn-header:focus {
+  color: var(--aerolink-navy);
+  background: #fff;
+}
+
+.entry-hero,
+.sign-in-panel {
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  margin-bottom: 0.35rem;
+  color: var(--aerolink-eyebrow);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entry-hero h1,
+.sign-in-panel h1 {
+  margin-bottom: 0.75rem;
+  font-size: 2.25rem;
+}
+
+.entry-hero .lead {
+  max-width: 40rem;
+  color: var(--aerolink-navy);
+}
+
+.gate-alert {
+  background: #fff6e5;
+  border: 1px solid var(--aerolink-accent);
+  color: var(--aerolink-eyebrow);
+}
+
+.module-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #d5dee6;
+  border-radius: 12px;
+  border-top: 4px solid var(--aerolink-navy);
+}
+
+.module-card h2 {
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.lock-label {
+  margin-bottom: 0.75rem;
+  color: var(--aerolink-eyebrow);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.module-note {
+  color: var(--aerolink-navy);
+}
+
+.module-card .btn {
+  margin-top: auto;
+  align-self: flex-start;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
