@@ -1,10 +1,41 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Main screen";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="entry-hero">
+    <p class="eyebrow">AeroLink Ground Services</p>
+    <h1>Main screen</h1>
+    <p class="lead">
+        This is the entry point for every employee. Choose a module below, then sign in.
+        Operational information and module functions stay closed until you have signed in.
+    </p>
+    <a class="btn btn-sign-in" asp-page="/Login">Sign in</a>
+</section>
+
+@if (!Model.IsSignedIn && Model.BlockedModuleName is not null)
+{
+    <div class="alert gate-alert" role="alert">
+        Sign in before opening <strong>@Model.BlockedModuleName</strong>.
+        Operational information and module functions are unavailable until you have signed in.
+    </div>
+}
+
+<section class="module-board" aria-label="Operational modules">
+    <div class="row g-4">
+        @foreach (var module in Model.Modules)
+        {
+            <div class="col-md-4">
+                <article class="module-card">
+                    <p class="lock-label">Sign-in required</p>
+                    <h2>@module.Name</h2>
+                    <p class="module-note">No operational information is available on this screen.</p>
+                    <a class="btn btn-outline-secondary"
+                       asp-page="/Index"
+                       asp-route-attempt="@module.Key">Open module</a>
+                </article>
+            </div>
+        }
+    </div>
+</section>
