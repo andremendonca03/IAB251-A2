@@ -6,6 +6,7 @@ html {
   --aerolink-navy: #101927;
   --aerolink-canvas: #f3f6f8;
   --aerolink-accent: #11B981;
+  --aerolink-accent-50: #11B981cc;
   --aerolink-eyebrow: #0e6b5c;
 }
 
@@ -54,7 +55,7 @@ body {
 
 .btn-sign-in:hover,
 .btn-sign-in:focus {
-  background: var(--aerolink-accent);
+  background: var(--aerolink-accent-50);
   color: var(--aerolink-navy);
 }
 

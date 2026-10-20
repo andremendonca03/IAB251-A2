@@ -11,7 +11,10 @@
         This is the entry point for every employee. Choose a module below, then sign in.
         Operational information and module functions stay closed until you have signed in.
     </p>
-    <a class="btn btn-sign-in" asp-page="/Login">Sign in</a>
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <a class="btn btn-sign-in" asp-page="/Login">Sign in</a>
+    }
 </section>
 
 @if (!Model.IsSignedIn && Model.BlockedModuleName is not null)
@@ -27,14 +30,24 @@
         @foreach (var module in Model.Modules)
         {
             <div class="col-md-4">
-                <article class="module-card">
-                    <p class="lock-label">Sign-in required</p>
+                <div class="module-card">
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <p class="lock-label">Sign-in required</p>
+                    }
                     <h2>@module.Name</h2>
-                    <p class="module-note">No operational information is available on this screen.</p>
-                    <a class="btn btn-outline-secondary"
-                       asp-page="/Index"
-                       asp-route-attempt="@module.Key">Open module</a>
-                </article>
+                    <p class="module-note">@module.Description</p>
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <a class="btn btn-outline-secondary"
+                        asp-page="/Index"
+                        asp-route-attempt="@module.Key">Open module</a>
+                    }
+                    else {
+                        <a class="btn btn-outline-secondary"
+                        asp-page="@module.Link">Open module</a>
+                    }
+                </div>
             </div>
         }
     </div>
