@@ -1,0 +1,68 @@
+@page
+@model BaggageHandlingModel
+@{
+    ViewData["Title"] = "Baggage Management";
+}
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h1 class="mb-4">Baggage Management</h1>
+
+        <form method="post" enctype="multipart/form-data" asp-page-handler="Import" class="mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <input style="padding:11px 18px" class="form-control" type="file" id="workbook" name="Workbook"
+                           accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-accent btn-lg">
+                        <img src="~/images/upload.svg" alt="Upload" />
+                        <span>Upload Daily Flight Manifest</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Message is not null)
+        {
+            <div class="alert @(Model.ImportSucceeded ? "alert-success" : "alert-danger")" role="alert">
+                @Model.Message
+            </div>
+        }
+
+
+        <hr />
+        <h2 class="mb-4">Flight Manifest</h2>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>FlightId</th>
+                        <th>FlightLabel</th>
+                        <th>FlightNumber</th>
+                        <th>DepartureAirport</th>
+                        <th>ArrivalAirport</th>
+                        <th>ScheduledDepartureUtc</th>
+                        <th>AircraftId</th>
+                        <th>LoadingStatus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var flight in Model.Flights)
+                    {
+                        <tr>
+                            <td>@flight.FlightId</td>
+                            <td>@flight.FlightLabel</td>
+                            <td>@flight.FlightNumber</td>
+                            <td>@flight.DepartureAirport</td>
+                            <td>@flight.ArrivalAirport</td>
+                            <td>@flight.ScheduledDepartureUtc.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>@flight.AircraftId</td>
+                            <td>@flight.LoadingStatus</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
