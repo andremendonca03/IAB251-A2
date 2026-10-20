@@ -1,0 +1,55 @@
+@model AeroLink.Components.FlightManifestSearch
+
+<form method="get" asp-page="/baggage-handling" class="mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label" for="flightId">Search by FlightId</label>
+            <input class="form-control" type="search" id="flightId" name="flightId"
+                   value="@Model.FlightId" placeholder="FlightId" />
+        </div>
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-outline-secondary">Search</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive data-table-wrap">
+    <table class="table data-table mb-0">
+        <thead>
+            <tr>
+                <th>FlightId</th>
+                <th>FlightLabel</th>
+                <th>FlightNumber</th>
+                <th>DepartureAirport</th>
+                <th>ArrivalAirport</th>
+                <th>ScheduledDepartureUtc</th>
+                <th>AircraftId</th>
+                <th>LoadingStatus</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Flights.Count == 0)
+            {
+                <tr>
+                    <td colspan="8">@(string.IsNullOrEmpty(Model.FlightId) ? "No flights in the manifest." : "No flights match that FlightId.")</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var flight in Model.Flights)
+                {
+                    <tr>
+                        <td>@flight.FlightId</td>
+                        <td>@flight.FlightLabel</td>
+                        <td>@flight.FlightNumber</td>
+                        <td>@flight.DepartureAirport</td>
+                        <td>@flight.ArrivalAirport</td>
+                        <td>@flight.ScheduledDepartureUtc.ToString("dd MMM yyyy HH:mm")</td>
+                        <td>@flight.AircraftId</td>
+                        <td><span class="status-badge">@flight.LoadingStatus</span></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

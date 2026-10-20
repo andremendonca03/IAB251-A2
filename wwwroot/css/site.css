@@ -8,6 +8,12 @@ html {
   --aerolink-accent: #11B981;
   --aerolink-accent-50: #11B981cc;
   --aerolink-eyebrow: #0e6b5c;
+
+  --aerolink-table-header: var(--aerolink-navy);
+  --aerolink-table-row: #ffffff;
+  --aerolink-table-row-alt: #f3f5f7;
+  --aerolink-badge-bg: #e6e8ec;
+  --aerolink-table-radius: 10px;
 }
 
 @media (min-width: 768px) {
@@ -46,17 +52,38 @@ body {
   font-weight: 400;
 }
 
-.btn-sign-in {
+.btn-accent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   background: var(--aerolink-accent);
   border: 0;
   color: var(--aerolink-navy);
-  font-weight: 400;
+  font-size: 16px;
 }
-
-.btn-sign-in:hover,
-.btn-sign-in:focus {
+.btn-accent:hover,
+.btn-accent:focus {
   background: var(--aerolink-accent-50);
   color: var(--aerolink-navy);
+}
+.btn-lg{
+  padding: 12px 30px;
+}
+.btn-summary {
+  align-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: fit-content;
+}
+.btn-summary img {
+  filter: invert(.6);
+  transition: 0.2s;
+}
+.btn-summary:hover img {
+  filter: invert(1);
 }
 
 .btn-header {
@@ -133,6 +160,55 @@ body {
 .module-card .btn {
   margin-top: auto;
   align-self: flex-start;
+}
+
+/* TABLE STYLES */
+.data-table-wrap {
+  border-radius: var(--aerolink-table-radius);
+  overflow: auto;
+}
+
+.data-table {
+  --bs-table-bg: var(--aerolink-table-row);
+  --bs-table-color: var(--aerolink-navy);
+  --bs-table-border-color: transparent;
+  --bs-table-accent-bg: transparent;
+  margin-bottom: 0;
+  color: var(--aerolink-navy);
+}
+
+.data-table > :not(caption) > * > * {
+  padding: 0.8rem 1rem;
+  border: 0;
+  box-shadow: none;
+  vertical-align: middle;
+}
+
+.data-table thead th {
+  background: var(--aerolink-table-header);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.data-table tbody td {
+  background: var(--aerolink-table-row);
+  white-space: nowrap;
+}
+
+.data-table tbody tr:nth-child(even) td {
+  background: var(--aerolink-table-row-alt);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: var(--aerolink-badge-bg);
+  color: var(--aerolink-navy);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
