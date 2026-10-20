@@ -13,7 +13,6 @@ public class LoginModel : PageModel
 {
     // Note to tutor: this is a local API endpoint copied from the HR System - nothing was changed.
     private const string DepartmentsUrl = "http://localhost:5000/api/departments";
-    private const int OperationsDepartmentId = 1;
 
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -54,22 +53,25 @@ public class LoginModel : PageModel
             response.EnsureSuccessStatusCode();
 
             var departments = await response.Content.ReadFromJsonAsync<List<DepartmentResponse>>() ?? [];
-            var operations = departments.FirstOrDefault(d => d.DepartmentId == OperationsDepartmentId);
 
-            // Get employee from the HR API
-            var employee = operations?.Employees.FirstOrDefault(e =>
-                e.EmployeeId.ToString() == EmployeeId.Trim()
-                && string.Equals(e.Email, Email.Trim(), StringComparison.OrdinalIgnoreCase));
+            // Match the employee in any department. The department stays on the signed-in user for later page checks.
+            var match = departments
+                .SelectMany(department => department.Employees.Select(employee => new { department, employee }))
+                .FirstOrDefault(pair =>
+                    pair.employee.EmployeeId.ToString() == EmployeeId.Trim()
+                    && string.Equals(pair.employee.Email, Email.Trim(), StringComparison.OrdinalIgnoreCase));
 
             // Login successful
-            var role = employee?.JobTitle ?? string.Empty;
-            if (employee is not null && (role == "Baggage Handler" || role == "BG_Supervisor"))
+            var role = match?.employee.JobTitle ?? string.Empty;
+            if (match is not null)
             {
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, Email),
                     new Claim(ClaimTypes.Role, role),
-                    new Claim("EmployeeId", EmployeeId)
+                    new Claim("EmployeeId", EmployeeId),
+                    new Claim("DepartmentId", match.department.DepartmentId.ToString()),
+                    new Claim("DepartmentName", match.department.Name)
                 };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -79,7 +81,7 @@ public class LoginModel : PageModel
             }
 
             // Login failed
-            ErrorMessage = "Access denied. Employee not found or unauthorized role (Requires Baggage Handler or BG_Supervisor).";
+            ErrorMessage = "Access denied. Employee not found or unauthorized.";
             return Page();
         }
         catch (Exception)

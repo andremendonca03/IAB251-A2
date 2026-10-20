@@ -64,6 +64,21 @@ body {
 .btn-lg{
   padding: 12px 30px;
 }
+.btn-summary {
+  align-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: fit-content;
+}
+.btn-summary img {
+  filter: invert(.6);
+  transition: 0.2s;
+}
+.btn-summary:hover img {
+  filter: invert(1);
+}
 
 .btn-header {
   color: #fff;

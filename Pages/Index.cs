@@ -33,8 +33,9 @@ public class IndexModel : PageModel
     ];
 
     public string? BlockedModuleName { get; private set; }
+    public string? BlockedModuleCause { get; private set; }
 
-    public void OnGet(string? attempt)
+    public void OnGet(string? attempt, string? cause)
     {
         if (IsSignedIn || string.IsNullOrWhiteSpace(attempt))
         {
@@ -42,6 +43,7 @@ public class IndexModel : PageModel
         }
 
         BlockedModuleName = Modules.FirstOrDefault(module => module.Key == attempt)?.Name;
+        BlockedModuleCause = cause;
     }
 
     public sealed class ModuleArea

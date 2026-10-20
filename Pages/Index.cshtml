@@ -6,24 +6,35 @@
 
 <section class="entry-hero">
     <p class="eyebrow">AeroLink Ground Services</p>
-    <h1>Main screen</h1>
+    <h1>Welcome</h1>
     <p class="lead">
-        This is the entry point for every employee. Choose a module below, then sign in.
-        Operational information and module functions stay closed until you have signed in.
+        Access essential ground services and manage your tasks efficiently.
+        Explore real-time updates on turnaround operations, and ensure every task is completed on time.
     </p>
     @if (User.Identity?.IsAuthenticated != true)
     {
-        <a class="btn btn-accent" asp-page="/Login">Sign in</a>
+        <a class="btn btn-accent" style="max-width: fit-content" asp-page="/Login">Sign in</a>
+   
     }
 </section>
 
-@if (!Model.IsSignedIn && Model.BlockedModuleName is not null)
+
+@if (Model.BlockedModuleName is not null)
 {
-    <div class="alert gate-alert" role="alert">
-        Sign in before opening <strong>@Model.BlockedModuleName</strong>.
-        Operational information and module functions are unavailable until you have signed in.
-    </div>
+    @if (Model.BlockedModuleCause == "role")
+    {
+        <div class="alert gate-alert" role="alert">
+            You can't access <strong>@Model.BlockedModuleName</strong>.
+            Request access to this module with your Supervisor.
+        </div>
+    } else {
+        <div class="alert gate-alert" role="alert">
+            Sign in before opening <strong>@Model.BlockedModuleName</strong>.
+            Operational information and module functions are unavailable until you have signed in.
+        </div>
+    }
 }
+
 
 <section class="module-board" aria-label="Operational modules">
     <div class="row g-4">
@@ -31,21 +42,47 @@
         {
             <div class="col-md-4">
                 <div class="module-card">
-                    @if (User.Identity?.IsAuthenticated != true)
-                    {
+                    @if (User.Identity?.IsAuthenticated != true) {
                         <p class="lock-label">Sign-in required</p>
                     }
+
                     <h2>@module.Name</h2>
                     <p class="module-note">@module.Description</p>
-                    @if (User.Identity?.IsAuthenticated != true)
-                    {
+
+                    @if (
+                        // Logged In Operations User for Operations Module
+                        User.Identity?.IsAuthenticated == true &&
+                        User.FindFirst("DepartmentId")?.Value == "1" &&
+                        @module.Key == "baggage"
+                    ) {
+                        <a class="btn btn-accent"
+                        asp-page="@module.Link">Open module</a>
+                    }
+
+                    else if (
+                        // Logged In Operations User for other Module
+                        User.Identity?.IsAuthenticated == true &&
+                        User.FindFirst("DepartmentId")?.Value == "1"
+                    ) {
                         <a class="btn btn-outline-secondary"
                         asp-page="/Index"
-                        asp-route-attempt="@module.Key">Open module</a>
+                        asp-route-attempt="@module.Key"
+                        asp-route-cause="role">Open module</a>
                     }
+
+                    else if (
+                        // Logged In User from other Department
+                        User.Identity?.IsAuthenticated == true
+                    ) {
+                        <a class="btn btn-outline-secondary"
+                        asp-page="">Open module</a>
+                    }
+                    
                     else {
                         <a class="btn btn-outline-secondary"
-                        asp-page="@module.Link">Open module</a>
+                        asp-page="/Index"
+                        asp-route-attempt="@module.Key"
+                        asp-route-cause="login">Open module</a>
                     }
                 </div>
             </div>
