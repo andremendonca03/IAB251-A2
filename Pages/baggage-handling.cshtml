@@ -45,36 +45,6 @@
             }
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-sm mb-0">
-                <thead>
-                    <tr>
-                        <th>FlightId</th>
-                        <th>FlightLabel</th>
-                        <th>FlightNumber</th>
-                        <th>DepartureAirport</th>
-                        <th>ArrivalAirport</th>
-                        <th>ScheduledDepartureUtc</th>
-                        <th>AircraftId</th>
-                        <th>LoadingStatus</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var flight in Model.Flights)
-                    {
-                        <tr>
-                            <td>@flight.FlightId</td>
-                            <td>@flight.FlightLabel</td>
-                            <td>@flight.FlightNumber</td>
-                            <td>@flight.DepartureAirport</td>
-                            <td>@flight.ArrivalAirport</td>
-                            <td>@flight.ScheduledDepartureUtc.ToString("dd MMM yyyy HH:mm")</td>
-                            <td>@flight.AircraftId</td>
-                            <td>@flight.LoadingStatus</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        @await Component.InvokeAsync("FlightManifest")
     </div>
 </div>

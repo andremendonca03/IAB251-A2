@@ -24,9 +24,14 @@ public class BaggageHandlingModel : PageModel
     public string? Message { get; private set; }
     public bool ImportSucceeded { get; private set; }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        if (User.Identity?.IsAuthenticated != true) {
+            return RedirectToPage("/Login");
+        }
+
         await LoadAsync();
+        return Page();
     }
 
     public async Task<IActionResult> OnPostImportAsync()
