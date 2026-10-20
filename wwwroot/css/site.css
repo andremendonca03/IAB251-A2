@@ -46,17 +46,23 @@ body {
   font-weight: 400;
 }
 
-.btn-sign-in {
+.btn-accent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   background: var(--aerolink-accent);
   border: 0;
   color: var(--aerolink-navy);
-  font-weight: 400;
+  font-size: 16px;
 }
-
-.btn-sign-in:hover,
-.btn-sign-in:focus {
+.btn-accent:hover,
+.btn-accent:focus {
   background: var(--aerolink-accent-50);
   color: var(--aerolink-navy);
+}
+.btn-lg{
+  padding: 12px 30px;
 }
 
 .btn-header {

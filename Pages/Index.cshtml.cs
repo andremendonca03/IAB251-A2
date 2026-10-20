@@ -14,21 +14,21 @@ public class IndexModel : PageModel
             Key = "turnaround",
             Name = "Turnaround Planning and Resource Allocation",
             Description = "Manage and plan ground operations turnaround activities efficiently.",
-            Link = "/FlightManifest",
+            Link = "",
         },
         new()
         {
             Key = "baggage",
             Name = "Baggage Unloading, Transfer and Loading Management",
             Description = "Track baggage handling processes and ensure timely transfers between gates.",
-            Link = "/BaggageManifest",
+            Link = "/baggage-handling",
         },
         new()
         {
             Key = "departure",
             Name = "Departure Readiness and Turnaround Completion",
             Description = "Prepare for and complete aircraft departures, ensuring smooth transitions.",
-            Link = "/DepartureManifest",
+            Link = "",
         },
     ];
 
