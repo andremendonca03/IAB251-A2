@@ -5,13 +5,14 @@ html {
 :root {
   --aerolink-navy: #101927;
   --aerolink-canvas: #f3f6f8;
-  --aerolink-accent: #11B981;
+  --aerolink-accent: #11b981;
   --aerolink-accent-50: #11B981cc;
   --aerolink-eyebrow: #0e6b5c;
 
   --aerolink-table-header: var(--aerolink-navy);
   --aerolink-table-row: #ffffff;
   --aerolink-table-row-alt: #f3f5f7;
+  --aerolink-table-row-hover: #d5f6e6;
   --aerolink-badge-bg: #e6e8ec;
   --aerolink-table-radius: 10px;
 }
@@ -50,6 +51,17 @@ body {
 .site-header .navbar-text {
   color: #fff;
   font-weight: 400;
+}
+
+.back-link {
+  display: block;
+  max-width: fit-content;
+  text-decoration: none;
+  color: #212529bf;
+  margin-bottom: 20px;
+}
+.back-link:hover {
+  text-decoration: underline;
 }
 
 .btn-accent {
@@ -189,6 +201,10 @@ body {
   color: #fff;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.data-table tbody tr:hover td {
+  background: var(--aerolink-table-row-hover) !important;
 }
 
 .data-table tbody td {

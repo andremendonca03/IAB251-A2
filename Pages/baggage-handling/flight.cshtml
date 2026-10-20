@@ -1,0 +1,10 @@
+@page "/baggage-handling/flight-{id:int}"
+@model FlightModel
+@{
+    ViewData["Title"] = Model.Flight.FlightLabel;
+}
+
+<a class="back-link" asp-page="/baggage-handling">Back to All Flights</a>
+
+<h1>@Model.Flight.FlightLabel</h1>
+<p>@Model.Flight.FlightNumber</p>
