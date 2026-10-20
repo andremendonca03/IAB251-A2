@@ -38,7 +38,7 @@
             {
                 @foreach (var flight in Model.Flights)
                 {
-                    <tr>
+                    <tr style="cursor:pointer" onclick="window.location='@Url.Page("/baggage-handling/flight", new { id = flight.FlightId })'">
                         <td>@flight.FlightId</td>
                         <td>@flight.FlightLabel</td>
                         <td>@flight.FlightNumber</td>

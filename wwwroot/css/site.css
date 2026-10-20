@@ -5,13 +5,17 @@ html {
 :root {
   --aerolink-navy: #101927;
   --aerolink-canvas: #f3f6f8;
-  --aerolink-accent: #11B981;
+  --aerolink-accent: #11b981;
   --aerolink-accent-50: #11B981cc;
   --aerolink-eyebrow: #0e6b5c;
 
   --aerolink-table-header: var(--aerolink-navy);
   --aerolink-table-row: #ffffff;
   --aerolink-table-row-alt: #f3f5f7;
+  --aerolink-table-row-hover: #d5f6e6;
+  --aerolink-table-row-special: #fafbec;
+  --aerolink-table-row-special-alt: #f1f3d6;
+  --aerolink-table-row-special-hover: #e7ebc4;
   --aerolink-badge-bg: #e6e8ec;
   --aerolink-table-radius: 10px;
 }
@@ -50,6 +54,17 @@ body {
 .site-header .navbar-text {
   color: #fff;
   font-weight: 400;
+}
+
+.back-link {
+  display: block;
+  max-width: fit-content;
+  text-decoration: none;
+  color: #212529bf;
+  margin-bottom: 20px;
+}
+.back-link:hover {
+  text-decoration: underline;
 }
 
 .btn-accent {
@@ -191,6 +206,10 @@ body {
   white-space: nowrap;
 }
 
+.data-table tbody tr:hover td {
+  background: var(--aerolink-table-row-hover) !important;
+}
+
 .data-table tbody td {
   background: var(--aerolink-table-row);
   white-space: nowrap;
@@ -202,13 +221,156 @@ body {
 
 .status-badge {
   display: inline-block;
-  padding: 0.15rem 0.5rem;
+  padding: 0.15rem 0.55rem;
   border-radius: 6px;
   background: var(--aerolink-badge-bg);
   color: var(--aerolink-navy);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
+}
+
+.status-badge.complete {
+  background: #1f9d55;
+  color: #fff;
+}
+
+.status-badge.missing {
+  background: #e23b3b;
+  color: #fff;
+}
+
+.status-badge.damaged {
+  background: #f0a202;
+  color: #fff;
+}
+
+.flight-card {
+  margin-bottom: 1.25rem;
+  padding: 1.4rem 1.6rem 1.2rem;
+  background: #fff;
+  border-radius: 16px;
+}
+
+.flight-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.flight-card h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.flight-card-head p {
+  margin: 0.15rem 0 0;
+  color: #667078;
+}
+
+.flight-label {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.flight-route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  background: #eceff3;
+  border-radius: 10px;
+}
+
+.flight-kicker {
+  margin: 0 0 0.15rem;
+  color: #6b7280;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.flight-place {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.flight-time {
+  margin: 0.15rem 0 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.flight-loaded {
+  margin: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.flight-destination {
+  text-align: right;
+}
+
+.flight-toolbar {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) auto;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+
+.bag-status {
+  display: contents;
+}
+
+.bag-search .form-label {
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.bag-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.bag-actions .form-select {
+  width: auto;
+  min-width: 11.5rem;
+}
+
+.bag-status .data-table-wrap {
+  grid-column: 1 / -1;
+}
+
+.bag-check-col {
+  width: 2.75rem;
+}
+
+.bag-check {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  accent-color: #11b981;
+}
+
+.data-table tbody tr.bag-special td {
+  background: var(--aerolink-table-row-special) !important;
+}
+.data-table tbody tr.bag-special:nth-child(even) td {
+  background: var(--aerolink-table-row-special-alt) !important;
+}
+.data-table tbody tr.bag-special:hover td {
+  background: var(--aerolink-table-row-special-hover) !important;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
