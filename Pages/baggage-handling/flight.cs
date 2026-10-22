@@ -112,7 +112,7 @@ public class FlightModel : PageModel
         return RedirectToPage(new { id, bagId = BagId });
     }
 
-    public async Task<IActionResult> OnPostApproveAsync(int id, int approvalBagId, string decision)
+    public async Task<IActionResult> OnPostApproveAsync(int id, int approvalBagId, string decision, string? justification)
     {
         if (User.Identity?.IsAuthenticated != true)
         {
@@ -142,6 +142,13 @@ public class FlightModel : PageModel
             return BadRequest();
         }
 
+        if (string.IsNullOrWhiteSpace(justification))
+        {
+            ModelState.AddModelError(string.Empty, "Provide a justification before approving this bag.");
+            await LoadAsync(flight);
+            return Page();
+        }
+
         if (!string.Equals(bag.HandlingType, "Standard", StringComparison.OrdinalIgnoreCase) && Acknowledge != "Yes")
         {
             ModelState.AddModelError(string.Empty, "Acknowledge the handling instructions before approving this bag.");
@@ -153,7 +160,7 @@ public class FlightModel : PageModel
         foreach (var exception in exceptions)
         {
             exception.Status = decision == "Load" ? "ApprovedToLoad" : "KeptUnloaded";
-            exception.DecisionReason = $"{(decision == "Load" ? "Load" : "Keep unloaded")} approved by {User.Identity!.Name}";
+            exception.DecisionReason = $"{(decision == "Load" ? "Load" : "Keep unloaded")} approved by {User.Identity!.Name}: {justification.Trim()}";
         }
 
         await UpdateLoadingStatusAsync(flight);

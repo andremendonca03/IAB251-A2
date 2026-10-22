@@ -88,7 +88,18 @@
         </div>
 
         <div class="table-responsive data-table-wrap">
-            <table class="table data-table mb-0">
+            <table class="table data-table baggage-table mb-0">
+                <colgroup>
+                    <col style="width: 4%" />
+                    <col style="width: 6%" />
+                    <col style="width: 6%" />
+                    <col style="width: 10%" />
+                    <col style="width: 9%" />
+                    <col style="width: 17%" />
+                    <col style="width: 10%" />
+                    <col style="width: 22%" />
+                    <col style="width: 16%" />
+                </colgroup>
                 <thead>
                     <tr>
                         <th class="bag-check-col"></th>
@@ -96,7 +107,7 @@
                         <th>FlightId</th>
                         <th>Tag</th>
                         <th>Handling Type</th>
-                        <th>HandlingInstruction</th>
+                        <th>Handling instructions</th>
                         <th class="text-end">Outcome</th>
                         <th>Supervisor approval</th>
                         <th>Issue / exception reason</th>
@@ -114,19 +125,22 @@
                         @foreach (var row in Model.Bags)
                         {
                             <tr class="@(row.IsSpecial ? "bag-special" : null)">
-                                <td>
+                                <td data-label="Select bag">
                                     <input class="form-check-input bag-check" type="checkbox" name="bagIds"
                                            value="@row.Bag.BagId" data-special="@(row.IsSpecial ? "true" : "false")" disabled="@(!Model.CanUpdateBags)" />
                                 </td>
-                                <td>@row.Bag.BagId</td>
-                                <td>@row.Bag.FlightId</td>
-                                <td>@row.Bag.Tag</td>
-                                <td>@row.Bag.HandlingType</td>
-                                <td>@row.Bag.HandlingInstruction</td>
-                                <td class="text-end"><span class="status-badge @row.Status.ToLowerInvariant()">@row.Status</span></td>
-                                <td>
+                                <td data-label="BagId">@row.Bag.BagId</td>
+                                <td data-label="FlightId">@row.Bag.FlightId</td>
+                                <td data-label="Tag">@row.Bag.Tag</td>
+                                <td data-label="Handling type">@row.Bag.HandlingType</td>
+                                <td data-label="Handling instructions">@row.Bag.HandlingInstruction</td>
+                                <td data-label="Outcome" class="text-end"><span class="status-badge @row.Status.ToLowerInvariant()">@row.Status</span></td>
+                                <td data-label="Supervisor approval" class="text-wrap">
                                     @if (row.NeedsApproval && Model.IsSupervisor)
                                     {
+                                        <label class="form-label" for="justification-@row.Bag.BagId">Justification</label>
+                                        <textarea class="form-control form-control-sm mb-2" id="justification-@row.Bag.BagId"
+                                                  name="justification" form="approval-@row.Bag.BagId" rows="2" required></textarea>
                                         @if (row.IsSpecial)
                                         {
                                             <label class="d-block mb-2">
@@ -142,7 +156,7 @@
                                         @(row.HasException ? row.Approval : "Not required")
                                     }
                                 </td>
-                                <td class="text-wrap">@(row.HasException ? row.Reason : "—")</td>
+                                <td data-label="Issue / exception reason" class="text-wrap">@(row.HasException ? row.Reason : "—")</td>
                             </tr>
                         }
                     }
