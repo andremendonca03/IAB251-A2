@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AeroLink.styles.css" asp-append-version="true" />
 </head>
-
 <body>
     <header class="site-header">
         <nav class="navbar navbar-expand-sm">
@@ -19,14 +18,23 @@
                     AeroLink Ops Manager
                 </a>
                 <p class="navbar-text m-0 p-0">| &nbsp;@ViewData["Title"]</p>
-                <div class="ms-auto">
-                    @if (ViewContext.RouteData.Values["page"]?.ToString() == "/Login")
+
+                <div class="ms-auto d-flex align-items-center">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <!-- Show user email and a Log Out button when logged in -->
+                        <span class="text-white me-3 small d-none d-sm-inline">@User.Identity.Name</span>
+                        <form method="post" asp-page="/Logout" class="m-0">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Log Out</button>
+                        </form>
+                    }
+                    else if (ViewContext.RouteData.Values["page"]?.ToString() == "/Login")
                     {
                         <a class="btn btn-header" asp-page="/Index">Main screen</a>
                     }
                     else
                     {
-                        <a class="btn btn-sign-in" asp-page="/Login">Sign in</a>
+                        <a class="btn btn-accent" asp-page="/Login">Sign in</a>
                     }
                 </div>
             </div>

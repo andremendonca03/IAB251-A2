@@ -1,0 +1,86 @@
+@page
+@model SummaryReportModel
+@{
+    ViewData["Title"] = "Loading Summary Report";
+}
+
+<a class="back-link" asp-page="/baggage-handling">Back to All Flights</a>
+
+<h1>Loading Summary Report</h1>
+<p class="text-muted">Generated @Model.GeneratedAtUtc.ToString("dd MMM yyyy HH:mm") UTC. Includes finalised flights from the current manifest.</p>
+
+@if (Model.Reports.Count == 0)
+{
+    <div class="alert alert-info" role="status">
+        No flights are ready for a summary report. Complete baggage loading and approve all exceptions first.
+    </div>
+}
+else
+{
+    <div class="flight-card">
+        <h2 class="h5">Manifest totals</h2>
+        <p class="mb-0">
+            <strong>@Model.Reports.Count</strong> finalised flights &middot;
+            <strong>@Model.Reports.Sum(report => report.Total)</strong> bags &middot;
+            <strong>@Model.Reports.Sum(report => report.Loaded)</strong> loaded &middot;
+            <strong>@Model.Reports.Sum(report => report.Unloaded)</strong> kept unloaded
+        </p>
+    </div>
+
+    @foreach (var report in Model.Reports)
+    {
+        <section class="flight-card">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <h2 class="h4">Flight @report.Flight.FlightNumber</h2>
+                <span class="status-badge complete">Complete</span>
+            </div>
+            <p>
+                @report.Flight.DepartureAirport to @report.Flight.ArrivalAirport &middot;
+                Scheduled departure: @report.Flight.ScheduledDepartureUtc.ToString("dd MMM yyyy HH:mm") UTC<br />
+                Flight ID: @report.Flight.FlightId &middot; Label: @report.Flight.FlightLabel &middot; Aircraft: @report.Flight.AircraftId
+            </p>
+            <dl class="row mb-3">
+                <div class="col-6 col-md-3"><dt>Total bags</dt><dd>@report.Total</dd></div>
+                <div class="col-6 col-md-3"><dt>Loaded</dt><dd>@report.Loaded</dd></div>
+                <div class="col-6 col-md-3"><dt>Kept unloaded</dt><dd>@report.Unloaded</dd></div>
+                <div class="col-6 col-md-3"><dt>Bags with exceptions</dt><dd>@report.ExceptionBags</dd></div>
+            </dl>
+
+            <h3 class="h5">Exception decisions</h3>
+            @if (report.Exceptions.Count == 0)
+            {
+                <p class="mb-0">No exceptions reported.</p>
+            }
+            else
+            {
+                <div class="data-table-wrap">
+                    <table class="table data-table baggage-table mb-0">
+                        <colgroup>
+                            <col style="width: 10%" />
+                            <col style="width: 15%" />
+                            <col style="width: 25%" />
+                            <col style="width: 15%" />
+                            <col style="width: 35%" />
+                        </colgroup>
+                        <thead>
+                            <tr><th>Bag ID</th><th>Issue</th><th>Original reason</th><th>Decision</th><th>Supervisor approval and justification</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var exception in report.Exceptions)
+                            {
+                                <tr>
+                                    <td data-label="Bag ID">@exception.BagId</td>
+                                    <td data-label="Issue">@(exception.Category switch { "MissingBag" => "Missing", "DamagedBag" => "Damaged", _ => exception.Category })</td>
+                                    <td data-label="Original reason">@exception.Description</td>
+                                    <td data-label="Decision">@(exception.Status == "ApprovedToLoad" ? "Load" : "Keep unloaded")</td>
+                                    <td data-label="Supervisor approval and justification">@exception.DecisionReason</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+}
+

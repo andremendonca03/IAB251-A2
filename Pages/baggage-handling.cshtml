@@ -1,0 +1,50 @@
+@page
+@model BaggageHandlingModel
+@{
+    ViewData["Title"] = "Baggage Management";
+}
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h1 class="mb-4">Baggage Management</h1>
+
+        <form method="post" enctype="multipart/form-data" asp-page-handler="Import" class="mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <input style="padding:11px 18px" class="form-control" type="file" id="workbook" name="Workbook"
+                           accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-accent btn-lg">
+                        <img src="~/images/upload.svg" alt="Upload" />
+                        <span>Upload Daily Flight Manifest</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Message is not null)
+        {
+            <div class="alert @(Model.ImportSucceeded ? "alert-success" : "alert-danger")" role="alert">
+                @Model.Message
+            </div>
+        }
+
+
+        <hr />
+        
+        <div class="row">
+            <h2 class="col mb-4">Flight Manifest</h2>
+
+            @if (User.IsInRole("BG_Supervisor"))
+            {
+                <a class="col btn btn-summary btn-outline-secondary" asp-page="/summary-report">
+                    <img src="~/images/graph-up.svg" />
+                    <span>Summary Report</span>
+                </a>
+            }
+        </div>
+
+        @await Component.InvokeAsync("FlightManifest")
+    </div>
+</div>

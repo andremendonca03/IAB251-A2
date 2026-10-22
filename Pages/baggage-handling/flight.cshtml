@@ -1,0 +1,283 @@
+@page "/baggage-handling/flight-{id:int}"
+@model FlightModel
+@{
+    ViewData["Title"] = $"Flight {Model.Flight.FlightNumber}";
+}
+
+<a class="back-link" asp-page="/baggage-handling">Back to All Flights</a>
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<section class="flight-card">
+    <div class="flight-card-head">
+        <div>
+            <h1>Flight @Model.Card.Flight.FlightNumber</h1>
+            <p>@Model.Card.Flight.AircraftId</p>
+        </div>
+        <p class="flight-label">Flight label @Model.Card.Flight.FlightLabel</p>
+    </div>
+    <div class="flight-route">
+        <div>
+            <p class="flight-kicker">Origin airport</p>
+            <p class="flight-place">@Model.Card.OriginName (@Model.Card.Flight.DepartureAirport)</p>
+            <p class="flight-time">@Model.Card.Flight.ScheduledDepartureUtc.ToString("dd/MM/yyyy — HH:mm:ss")</p>
+        </div>
+        <p class="flight-loaded">@Model.Card.Loaded / @Model.Card.Total Baggage Loaded</p>
+        <div class="flight-destination">
+            <p class="flight-kicker">Destination airport</p>
+            <p class="flight-place">@Model.Card.DestinationName (@Model.Card.Flight.ArrivalAirport)</p>
+        </div>
+    </div>
+</section>
+
+<div class="flight-toolbar">
+    <form method="get" class="bag-search">
+        <label class="form-label" for="bagId">Search by bagId</label>
+        <div class="d-flex gap-2">
+            <input class="form-control" type="search" id="bagId" name="bagId"
+                   value="@Model.BagId" placeholder="bagId" />
+            <button type="submit" class="btn btn-outline-secondary">Search</button>
+        </div>
+    </form>
+
+    <form method="post" id="bag-status-form" class="bag-status">
+        <div class="bag-actions">
+            <input type="hidden" name="bagId" value="@Model.BagId" />
+            <input type="hidden" name="acknowledge" id="acknowledge" value="" />
+            <select class="form-select form-select-sm" id="outcome" name="outcome" disabled>
+                <option value="" selected disabled>Baggage Status</option>
+                <option>Pending</option>
+                <option>Complete</option>
+                <option>Missing</option>
+                <option>Damaged</option>
+            </select>
+
+        <div class="modal fade" id="handling-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5">Acknowledge handling</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Confirm you have read the handling instructions for the selected baggage.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" id="handling-back">Go back</button>
+                        <button type="button" class="btn btn-accent" id="handling-confirm">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="description-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="description-title">Exception description</h2>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label" for="description">Description</label>
+                        <input class="form-control" type="text" id="description" name="description" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" id="description-back">Go back</button>
+                        <button type="button" class="btn btn-accent" id="description-confirm">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="table-responsive data-table-wrap">
+            <table class="table data-table baggage-table mb-0">
+                <colgroup>
+                    <col style="width: 4%" />
+                    <col style="width: 6%" />
+                    <col style="width: 6%" />
+                    <col style="width: 10%" />
+                    <col style="width: 9%" />
+                    <col style="width: 17%" />
+                    <col style="width: 10%" />
+                    <col style="width: 22%" />
+                    <col style="width: 16%" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="bag-check-col"></th>
+                        <th>BagId</th>
+                        <th>FlightId</th>
+                        <th>Tag</th>
+                        <th>Handling Type</th>
+                        <th>Handling instructions</th>
+                        <th class="text-end">Outcome</th>
+                        <th>Supervisor approval</th>
+                        <th>Issue / exception reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Bags.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="9">@(string.IsNullOrEmpty(Model.BagId) ? "No bags on this flight." : "No bags match that bagId.")</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in Model.Bags)
+                        {
+                            <tr class="@(row.IsSpecial ? "bag-special" : null)">
+                                <td data-label="Select bag">
+                                    <input class="form-check-input bag-check" type="checkbox" name="bagIds"
+                                           value="@row.Bag.BagId" data-special="@(row.IsSpecial ? "true" : "false")" disabled="@(!Model.CanUpdateBags)" />
+                                </td>
+                                <td data-label="BagId">@row.Bag.BagId</td>
+                                <td data-label="FlightId">@row.Bag.FlightId</td>
+                                <td data-label="Tag">@row.Bag.Tag</td>
+                                <td data-label="Handling type">@row.Bag.HandlingType</td>
+                                <td data-label="Handling instructions">@row.Bag.HandlingInstruction</td>
+                                <td data-label="Outcome" class="text-end"><span class="status-badge @row.Status.ToLowerInvariant()">@row.Status</span></td>
+                                <td data-label="Supervisor approval" class="text-wrap">
+                                    @if (row.NeedsApproval && Model.IsSupervisor)
+                                    {
+                                        <label class="form-label" for="justification-@row.Bag.BagId">Justification</label>
+                                        <textarea class="form-control form-control-sm mb-2" id="justification-@row.Bag.BagId"
+                                                  name="justification" form="approval-@row.Bag.BagId" rows="2" required></textarea>
+                                        @if (row.IsSpecial)
+                                        {
+                                            <label class="d-block mb-2">
+                                                <input type="checkbox" name="acknowledge" value="Yes" form="approval-@row.Bag.BagId" required />
+                                                Handling instructions read
+                                            </label>
+                                        }
+                                        <button type="submit" class="btn btn-sm btn-success" form="approval-@row.Bag.BagId" name="decision" value="Load">Approve: Load</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" form="approval-@row.Bag.BagId" name="decision" value="KeepUnloaded">Approve: Keep unloaded</button>
+                                    }
+                                    else
+                                    {
+                                        @(row.HasException ? row.Approval : "Not required")
+                                    }
+                                </td>
+                                <td data-label="Issue / exception reason" class="text-wrap">@(row.HasException ? row.Reason : "—")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+@if (Model.IsSupervisor)
+{
+    @foreach (var row in Model.Bags.Where(row => row.NeedsApproval))
+    {
+        <form method="post" asp-page-handler="Approve" asp-route-id="@Model.Flight.FlightId" id="approval-@row.Bag.BagId">
+            <input type="hidden" name="approvalBagId" value="@row.Bag.BagId" />
+            <input type="hidden" name="bagId" value="@Model.BagId" />
+        </form>
+    }
+}
+
+@section Scripts {
+    <script>
+        const form = document.getElementById("bag-status-form");
+        const outcome = document.getElementById("outcome");
+        const acknowledge = document.getElementById("acknowledge");
+        const description = document.getElementById("description");
+        const handlingModalEl = document.getElementById("handling-modal");
+        const descriptionModalEl = document.getElementById("description-modal");
+        const handlingModal = new bootstrap.Modal(handlingModalEl);
+        const descriptionModal = new bootstrap.Modal(descriptionModalEl);
+        let handlingConfirmed = false;
+        let descriptionConfirmed = false;
+
+        function selectedSpecial() {
+            return [...form.querySelectorAll(".bag-check:checked")].some((box) => box.dataset.special === "true");
+        }
+
+        function needsDescription() {
+            return outcome.value === "Missing" || outcome.value === "Damaged";
+        }
+
+        function resetOutcome() {
+            outcome.selectedIndex = 0;
+            acknowledge.value = "";
+            description.value = "";
+            description.classList.remove("is-invalid");
+        }
+
+        function syncStatus() {
+            outcome.disabled = form.querySelector(".bag-check:checked") === null;
+            if (outcome.disabled) {
+                resetOutcome();
+            }
+        }
+
+        function openDescription() {
+            document.getElementById("description-title").textContent = outcome.value + " baggage";
+            descriptionConfirmed = false;
+            descriptionModal.show();
+            description.focus();
+        }
+
+        form.addEventListener("change", (event) => {
+            if (event.target === outcome && outcome.value) {
+                if (selectedSpecial()) {
+                    handlingConfirmed = false;
+                    handlingModal.show();
+                    return;
+                }
+                if (needsDescription()) {
+                    openDescription();
+                    return;
+                }
+                form.submit();
+                return;
+            }
+            syncStatus();
+        });
+
+        document.getElementById("handling-back").addEventListener("click", () => handlingModal.hide());
+        document.getElementById("handling-confirm").addEventListener("click", () => {
+            handlingConfirmed = true;
+            acknowledge.value = "Yes";
+            handlingModal.hide();
+        });
+        handlingModalEl.addEventListener("hidden.bs.modal", () => {
+            if (!handlingConfirmed) {
+                resetOutcome();
+                return;
+            }
+            handlingConfirmed = false;
+            if (needsDescription()) {
+                setTimeout(openDescription, 0);
+                return;
+            }
+            form.submit();
+        });
+
+        document.getElementById("description-back").addEventListener("click", () => descriptionModal.hide());
+        document.getElementById("description-confirm").addEventListener("click", () => {
+            if (description.value.trim().length === 0) {
+                description.classList.add("is-invalid");
+                description.focus();
+                return;
+            }
+            descriptionConfirmed = true;
+            descriptionModal.hide();
+        });
+        description.addEventListener("input", () => description.classList.remove("is-invalid"));
+        description.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("description-confirm").click();
+            }
+        });
+        descriptionModalEl.addEventListener("hidden.bs.modal", () => {
+            if (!descriptionConfirmed) {
+                resetOutcome();
+                return;
+            }
+            form.submit();
+        });
+    </script>
+}
