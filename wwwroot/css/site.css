@@ -230,6 +230,11 @@ body {
   line-height: 1.4;
 }
 
+.status-badge.started {
+  background: #f0a202;
+  color: var(--aerolink-navy);
+}
+
 .status-badge.complete {
   background: #1f9d55;
   color: #fff;

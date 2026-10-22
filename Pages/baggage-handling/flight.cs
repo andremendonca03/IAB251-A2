@@ -32,6 +32,8 @@ public class FlightModel : PageModel
     public Flight Flight { get; private set; } = null!;
     public FlightCard Card { get; private set; } = null!;
     public IReadOnlyList<BagRow> Bags { get; private set; } = [];
+    public bool IsSupervisor => User.IsInRole("BG_Supervisor");
+    public bool CanUpdateBags => IsSupervisor || User.IsInRole("Baggage Handler");
 
     [BindProperty(SupportsGet = true)]
     public string? BagId { get; set; }
@@ -72,6 +74,11 @@ public class FlightModel : PageModel
             return RedirectToPage("/Login");
         }
 
+        if (!CanUpdateBags)
+        {
+            return Forbid();
+        }
+
         var flight = await _db.Flights.FirstOrDefaultAsync(flight => flight.FlightId == id);
         if (flight is null)
         {
@@ -92,9 +99,76 @@ public class FlightModel : PageModel
 
         var selectedIds = bags.Select(bag => bag.BagId).ToList();
         var exceptions = await _db.Exceptions.Where(item => selectedIds.Contains(item.BagId)).ToListAsync();
+        if (Outcome == "Complete" && exceptions.Count > 0)
+        {
+            ModelState.AddModelError(string.Empty, "Bags with an exception must be approved using the supervisor's Load or Keep unloaded buttons.");
+            await LoadAsync(flight);
+            return Page();
+        }
+
         await change.ApplyAsync(_db, exceptions);
+        await UpdateLoadingStatusAsync(flight);
         await _db.SaveChangesAsync();
         return RedirectToPage(new { id, bagId = BagId });
+    }
+
+    public async Task<IActionResult> OnPostApproveAsync(int id, int approvalBagId, string decision)
+    {
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return RedirectToPage("/Login");
+        }
+
+        if (!IsSupervisor)
+        {
+            return Forbid();
+        }
+
+        if (decision is not ("Load" or "KeepUnloaded"))
+        {
+            return BadRequest();
+        }
+
+        var flight = await _db.Flights.FirstOrDefaultAsync(item => item.FlightId == id);
+        var bag = await _db.Bags.FirstOrDefaultAsync(item => item.FlightId == id && item.BagId == approvalBagId);
+        if (flight is null || bag is null)
+        {
+            return NotFound();
+        }
+
+        var exceptions = await _db.Exceptions.Where(item => item.FlightId == id && item.BagId == approvalBagId).ToListAsync();
+        if (exceptions.Count == 0 || exceptions.All(item => BagRow.IsApproved(item)))
+        {
+            return BadRequest();
+        }
+
+        if (!string.Equals(bag.HandlingType, "Standard", StringComparison.OrdinalIgnoreCase) && Acknowledge != "Yes")
+        {
+            ModelState.AddModelError(string.Empty, "Acknowledge the handling instructions before approving this bag.");
+            await LoadAsync(flight);
+            return Page();
+        }
+
+        bag.Outcome = decision == "Load" ? "Complete" : "Unloaded";
+        foreach (var exception in exceptions)
+        {
+            exception.Status = decision == "Load" ? "ApprovedToLoad" : "KeptUnloaded";
+            exception.DecisionReason = $"{(decision == "Load" ? "Load" : "Keep unloaded")} approved by {User.Identity!.Name}";
+        }
+
+        await UpdateLoadingStatusAsync(flight);
+        await _db.SaveChangesAsync();
+        return RedirectToPage(new { id, bagId = BagId });
+    }
+
+    private async Task UpdateLoadingStatusAsync(Flight flight)
+    {
+        var bags = await _db.Bags.Where(bag => bag.FlightId == flight.FlightId).ToListAsync();
+        var exceptions = await _db.Exceptions.Where(item => item.FlightId == flight.FlightId).ToListAsync();
+        flight.LoadingStatus = bags.Count > 0
+            && bags.All(bag => bag.Outcome == "Complete"
+                || (bag.Outcome == "Unloaded" && exceptions.Any(item => item.BagId == bag.BagId && item.Status == "KeptUnloaded")))
+            && exceptions.All(item => BagRow.IsApproved(item)) ? "Complete" : "Started";
     }
 
     private async Task LoadAsync(Flight flight)
@@ -103,7 +177,7 @@ public class FlightModel : PageModel
         var bags = await _db.Bags.Where(bag => bag.FlightId == flight.FlightId).OrderBy(bag => bag.BagId).ToListAsync();
         var bagIds = bags.Select(bag => bag.BagId).ToList();
         var exceptions = await _db.Exceptions.Where(item => bagIds.Contains(item.BagId)).ToListAsync();
-        var byBag = exceptions.GroupBy(item => item.BagId).ToDictionary(group => group.Key, group => group.First());
+        var byBag = exceptions.GroupBy(item => item.BagId).ToDictionary(group => group.Key, group => group.ToList());
 
         var rows = bags.Select(bag => new BagRow(bag, byBag.GetValueOrDefault(bag.BagId))).ToList();
         Card = new FlightCard(flight, AirportName(flight.DepartureAirport), AirportName(flight.ArrivalAirport), rows);
@@ -124,7 +198,7 @@ public sealed class FlightCard
         Flight = flight;
         OriginName = originName;
         DestinationName = destinationName;
-        Loaded = bags.Count(bag => bag.Status == "Complete");
+        Loaded = bags.Count(bag => bag.Status == "Complete" && !bag.NeedsApproval);
         Total = bags.Count;
     }
 
@@ -137,10 +211,16 @@ public sealed class FlightCard
 
 public sealed class BagRow
 {
-    public BagRow(Bag bag, BaggageException? exception)
+    public BagRow(Bag bag, IReadOnlyList<BaggageException>? exceptions)
     {
         Bag = bag;
-        Status = exception?.Category switch
+        exceptions ??= [];
+        var pending = exceptions.FirstOrDefault(item => !IsApproved(item));
+        NeedsApproval = pending is not null;
+        HasException = exceptions.Count > 0;
+        Reason = string.Join("; ", exceptions.Select(item => item.Description));
+        Approval = NeedsApproval ? "Awaiting approval" : exceptions.FirstOrDefault()?.DecisionReason ?? string.Empty;
+        Status = pending?.Category switch
         {
             "MissingBag" => "Missing",
             "DamagedBag" => "Damaged",
@@ -150,6 +230,11 @@ public sealed class BagRow
 
     public Bag Bag { get; }
     public string Status { get; }
+    public bool NeedsApproval { get; }
+    public bool HasException { get; }
+    public string Reason { get; }
+    public string Approval { get; }
+    public static bool IsApproved(BaggageException exception) => exception.Status is "ApprovedToLoad" or "KeptUnloaded";
     public bool IsSpecial => !string.Equals(Bag.HandlingType, "Standard", StringComparison.OrdinalIgnoreCase);
 }
 
@@ -188,6 +273,12 @@ public sealed class BaggageStatusChange
                 existing = [];
             }
 
+            foreach (var exception in existing)
+            {
+                exception.Status = "Open";
+                exception.DecisionReason = string.Empty;
+            }
+
             if (Categories.TryGetValue(Outcome, out var category))
             {
                 if (existing.Count == 0)
@@ -207,12 +298,7 @@ public sealed class BaggageStatusChange
                 {
                     existing[0].Category = category;
                     existing[0].Description = Description;
-                    db.Exceptions.RemoveRange(existing.Skip(1));
                 }
-            }
-            else
-            {
-                db.Exceptions.RemoveRange(existing);
             }
         }
     }

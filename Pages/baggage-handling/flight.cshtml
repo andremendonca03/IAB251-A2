@@ -5,6 +5,7 @@
 }
 
 <a class="back-link" asp-page="/baggage-handling">Back to All Flights</a>
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 <section class="flight-card">
     <div class="flight-card-head">
@@ -97,13 +98,15 @@
                         <th>Handling Type</th>
                         <th>HandlingInstruction</th>
                         <th class="text-end">Outcome</th>
+                        <th>Supervisor approval</th>
+                        <th>Issue / exception reason</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Bags.Count == 0)
                     {
                         <tr>
-                            <td colspan="7">@(string.IsNullOrEmpty(Model.BagId) ? "No bags on this flight." : "No bags match that bagId.")</td>
+                            <td colspan="9">@(string.IsNullOrEmpty(Model.BagId) ? "No bags on this flight." : "No bags match that bagId.")</td>
                         </tr>
                     }
                     else
@@ -113,7 +116,7 @@
                             <tr class="@(row.IsSpecial ? "bag-special" : null)">
                                 <td>
                                     <input class="form-check-input bag-check" type="checkbox" name="bagIds"
-                                           value="@row.Bag.BagId" data-special="@(row.IsSpecial ? "true" : "false")" />
+                                           value="@row.Bag.BagId" data-special="@(row.IsSpecial ? "true" : "false")" disabled="@(!Model.CanUpdateBags)" />
                                 </td>
                                 <td>@row.Bag.BagId</td>
                                 <td>@row.Bag.FlightId</td>
@@ -121,6 +124,25 @@
                                 <td>@row.Bag.HandlingType</td>
                                 <td>@row.Bag.HandlingInstruction</td>
                                 <td class="text-end"><span class="status-badge @row.Status.ToLowerInvariant()">@row.Status</span></td>
+                                <td>
+                                    @if (row.NeedsApproval && Model.IsSupervisor)
+                                    {
+                                        @if (row.IsSpecial)
+                                        {
+                                            <label class="d-block mb-2">
+                                                <input type="checkbox" name="acknowledge" value="Yes" form="approval-@row.Bag.BagId" required />
+                                                Handling instructions read
+                                            </label>
+                                        }
+                                        <button type="submit" class="btn btn-sm btn-success" form="approval-@row.Bag.BagId" name="decision" value="Load">Approve: Load</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" form="approval-@row.Bag.BagId" name="decision" value="KeepUnloaded">Approve: Keep unloaded</button>
+                                    }
+                                    else
+                                    {
+                                        @(row.HasException ? row.Approval : "Not required")
+                                    }
+                                </td>
+                                <td class="text-wrap">@(row.HasException ? row.Reason : "—")</td>
                             </tr>
                         }
                     }
@@ -129,6 +151,17 @@
         </div>
     </form>
 </div>
+
+@if (Model.IsSupervisor)
+{
+    @foreach (var row in Model.Bags.Where(row => row.NeedsApproval))
+    {
+        <form method="post" asp-page-handler="Approve" asp-route-id="@Model.Flight.FlightId" id="approval-@row.Bag.BagId">
+            <input type="hidden" name="approvalBagId" value="@row.Bag.BagId" />
+            <input type="hidden" name="bagId" value="@Model.BagId" />
+        </form>
+    }
+}
 
 @section Scripts {
     <script>
