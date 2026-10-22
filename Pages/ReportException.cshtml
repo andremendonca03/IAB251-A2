@@ -1,0 +1,68 @@
+﻿@page "{flightId:int}"
+@model AeroLink.Pages.ReportExceptionModel
+@{
+    ViewData["Title"] = "Report Baggage Exception";
+}
+
+<!-- User Story 58: Baggage Handler Problem Reporting Interface -->
+<div class="container mt-4">
+    <div class="card shadow-sm border-danger">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Report Baggage Exception</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">
+                Report an issue identified with an existing bag. Flagging this bag will create an
+                <strong>Open Baggage Exception</strong> for supervisor investigation and prevent loading completion.
+            </p>
+
+            <form method="post">
+                <input type="hidden" asp-for="FlightId" />
+
+                <!-- Bag Selection from Manifest -->
+                <div class="mb-3">
+                    <label asp-for="BagId" class="form-label font-weight-bold">Select Bag Tag</label>
+                    <select asp-for="BagId" class="form-select">
+                        <option value="">-- Choose Bag Tag from Flight Manifest --</option>
+                        @foreach (var bag in Model.ManifestBags)
+                        {
+                            <option value="@bag.BagId">@bag.Tag (@bag.HandlingType)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="BagId" class="text-danger"></span>
+                </div>
+
+                <!-- Problem Category Dropdown -->
+                <div class="mb-3">
+                    <label asp-for="Category" class="form-label font-weight-bold">Problem Category</label>
+                    <select asp-for="Category" class="form-select">
+                        <option value="DamagedBag">Damaged Bag (Tear, broken lock, leaking)</option>
+                        <option value="MissingBag">Missing Bag (Listed on manifest, not found)</option>
+                        <option value="TagMismatch">Tag / Manifest Mismatch</option>
+                    </select>
+                </div>
+
+                <!-- Handler Comments / Description -->
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label font-weight-bold">Baggage Handler Comment / Notes</label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Describe the problem observed..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <!-- Submission Actions -->
+                <div class="d-flex justify-content-between">
+                    <a asp-page="/baggage-handling" asp-route-flightId="@Model.FlightId" class="btn btn-outline-secondary">
+                        Back to Baggage Handling
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        Flag & Submit Exception
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
