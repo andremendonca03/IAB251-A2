@@ -2,6 +2,7 @@ html {
   font-size: 14px;
 }
 
+/* Shared colours and table appearance. */
 :root {
   --aerolink-navy: #101927;
   --aerolink-canvas: #f3f6f8;
@@ -219,6 +220,7 @@ body {
   background: var(--aerolink-table-row-alt);
 }
 
+/* Status colours are selected by the lowercase status class rendered by Razor. */
 .status-badge {
   display: inline-block;
   padding: 0.15rem 0.55rem;
@@ -250,6 +252,7 @@ body {
   color: #fff;
 }
 
+/* Flight details and summary-report sections. */
 .flight-card {
   margin-bottom: 1.25rem;
   padding: 1.4rem 1.6rem 1.2rem;
@@ -358,6 +361,7 @@ body {
   min-width: 0;
 }
 
+/* Fixed widths and wrapping keep approval text within the available page width. */
 .baggage-table {
   width: 100%;
   table-layout: fixed;
@@ -382,6 +386,7 @@ body {
   resize: vertical;
 }
 
+/* On narrow screens, data-label values replace the table header for each row. */
 @media (max-width: 767px) {
   .flight-toolbar {
     grid-template-columns: minmax(0, 1fr);

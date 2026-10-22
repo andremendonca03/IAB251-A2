@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AeroLink.Pages;
 
+/// <summary>Supplies the home page's module cards and blocked-access messages.</summary>
 public class IndexModel : PageModel
 {
-    // Employee sign-in is a later story. Until that exists, nobody is signed in.
+    /// <summary>Legacy flag used by the blocked-message handler; the view checks the authenticated user directly.</summary>
     public bool IsSignedIn => false;
 
     public IReadOnlyList<ModuleArea> Modules { get; } =
@@ -35,6 +36,7 @@ public class IndexModel : PageModel
     public string? BlockedModuleName { get; private set; }
     public string? BlockedModuleCause { get; private set; }
 
+    /// <summary>Identifies the attempted module and the reason supplied for blocking access.</summary>
     public void OnGet(string? attempt, string? cause)
     {
         if (IsSignedIn || string.IsNullOrWhiteSpace(attempt))
@@ -46,6 +48,7 @@ public class IndexModel : PageModel
         BlockedModuleCause = cause;
     }
 
+    /// <summary>Display text and destination for a home-page module card.</summary>
     public sealed class ModuleArea
     {
         public required string Key { get; init; }

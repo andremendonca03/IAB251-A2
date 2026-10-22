@@ -10,11 +10,13 @@ using Xunit;
 
 namespace AeroLink;
 
+/// <summary>Checks justification, access rules and saved decisions in the baggage approval handlers.</summary>
+/// <remarks>Each case uses an isolated SQLite database and calls handlers directly, without HTTP middleware or a browser.</remarks>
 public class BaggageApprovalTests : IDisposable
 {
     private readonly BaggageHandlingContext _db;
 
-    // Each test gets its own database; the application's manifest is never used.
+    /// <summary>Seeds one damaged bag with an open exception in a new in-memory database.</summary>
     public BaggageApprovalTests()
     {
         var options = new DbContextOptionsBuilder<BaggageHandlingContext>()
@@ -36,6 +38,7 @@ public class BaggageApprovalTests : IDisposable
         _db.SaveChanges();
     }
 
+    /// <summary>Rejects absent or whitespace-only justifications without changing the manifest.</summary>
     [Theory]
     [InlineData("Load", null)]
     [InlineData("Load", "")]
@@ -56,6 +59,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Persists either decision with a trimmed justification, preserving the issue and updating totals.</summary>
     [Theory]
     [InlineData("Load", "Standard", "Complete", "ApprovedToLoad", "Load")]
     [InlineData("KeepUnloaded", "Standard", "Unloaded", "KeptUnloaded", "Keep unloaded")]
@@ -88,6 +92,7 @@ public class BaggageApprovalTests : IDisposable
         Assert.Equal(decision == "Load" ? 1 : 0, page.Card.Loaded);
     }
 
+    /// <summary>Prevents handlers and unrelated roles from approving either loading decision.</summary>
     [Theory]
     [InlineData("Baggage Handler", "Load")]
     [InlineData("Baggage Handler", "KeepUnloaded")]
@@ -103,6 +108,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Redirects unauthenticated approval requests to login without changing data.</summary>
     [Fact]
     public async Task Approval_RedirectsAnonymousUserToLogin()
     {
@@ -114,6 +120,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Requires handling acknowledgement for fragile bags even when justification is valid.</summary>
     [Theory]
     [InlineData("Load")]
     [InlineData("KeepUnloaded")]
@@ -131,6 +138,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Rejects missing records and approval requests using a different flight's bag.</summary>
     [Theory]
     [InlineData(99, 1)]
     [InlineData(1, 99)]
@@ -148,6 +156,7 @@ public class BaggageApprovalTests : IDisposable
         Assert.Equal("NotStarted", (await _db.Flights.AsNoTracking().SingleAsync(f => f.FlightId == 2)).LoadingStatus);
     }
 
+    /// <summary>Rejects decision values outside Load and KeepUnloaded.</summary>
     [Theory]
     [InlineData("")]
     [InlineData("Complete")]
@@ -160,6 +169,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Prevents the exception approval endpoint from updating an ordinary bag.</summary>
     [Fact]
     public async Task Approval_RejectsBagWithoutAnException()
     {
@@ -173,6 +183,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Preserves an existing sign-off when another decision is submitted without reopening the issue.</summary>
     [Theory]
     [InlineData("Load", "KeepUnloaded", "Complete", "ApprovedToLoad")]
     [InlineData("KeepUnloaded", "Load", "Unloaded", "KeptUnloaded")]
@@ -190,6 +201,7 @@ public class BaggageApprovalTests : IDisposable
         Assert.Equal(outcome, (await _db.Bags.AsNoTracking().SingleAsync()).Outcome);
     }
 
+    /// <summary>Keeps the flight in progress when approving one bag leaves another unresolved.</summary>
     [Theory]
     [InlineData("Load")]
     [InlineData("KeepUnloaded")]
@@ -205,6 +217,7 @@ public class BaggageApprovalTests : IDisposable
         Assert.Equal("Pending", (await _db.Bags.AsNoTracking().SingleAsync(b => b.BagId == 2)).Outcome);
     }
 
+    /// <summary>Prevents both baggage roles from bypassing exception approval through the ordinary status form.</summary>
     [Theory]
     [InlineData("Baggage Handler")]
     [InlineData("BG_Supervisor")]
@@ -221,6 +234,7 @@ public class BaggageApprovalTests : IDisposable
         await AssertUnchangedAsync();
     }
 
+    /// <summary>Requires a fresh justification after a status change reopens an approved issue.</summary>
     [Theory]
     [InlineData("Load")]
     [InlineData("KeepUnloaded")]
@@ -243,6 +257,8 @@ public class BaggageApprovalTests : IDisposable
         Assert.Equal("Open", (await _db.Exceptions.AsNoTracking().SingleAsync()).Status);
     }
 
+    /// <summary>Creates a page handler with test identity claims and the test database.</summary>
+    /// <param name="role">Role to authenticate; null creates an anonymous user.</param>
     private FlightModel CreatePage(string? role = "BG_Supervisor")
     {
         var identity = role is null ? new ClaimsIdentity() : new ClaimsIdentity(
@@ -256,6 +272,7 @@ public class BaggageApprovalTests : IDisposable
         };
     }
 
+    /// <summary>Checks that rejected requests leave the seeded bag, exception and flight untouched.</summary>
     private async Task AssertUnchangedAsync()
     {
         Assert.False(_db.ChangeTracker.HasChanges());
@@ -267,5 +284,6 @@ public class BaggageApprovalTests : IDisposable
         Assert.Equal("Started", (await _db.Flights.AsNoTracking().SingleAsync(f => f.FlightId == 1)).LoadingStatus);
     }
 
+    /// <summary>Closes the connection and releases the test's in-memory database.</summary>
     public void Dispose() => _db.Dispose();
 }

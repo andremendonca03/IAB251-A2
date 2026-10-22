@@ -6,10 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AeroLink.Pages;
 
+/// <summary>Builds an on-screen loading report for supervisors from the current manifest.</summary>
 public class SummaryReportModel : PageModel
 {
     private readonly BaggageHandlingContext _db;
 
+    /// <summary>Uses the manifest database as the report source.</summary>
     public SummaryReportModel(BaggageHandlingContext db)
     {
         _db = db;
@@ -18,6 +20,8 @@ public class SummaryReportModel : PageModel
     public List<FlightSummary> Reports { get; } = [];
     public DateTime GeneratedAtUtc { get; private set; }
 
+    /// <summary>Includes completed flights only when all bags are resolved and exceptions are approved.</summary>
+    /// <remarks>The report is regenerated on each request; it is not a stored historical snapshot.</remarks>
     public async Task<IActionResult> OnGetAsync()
     {
         if (User.Identity?.IsAuthenticated != true)
@@ -65,6 +69,7 @@ public class SummaryReportModel : PageModel
         return Page();
     }
 
+    /// <summary>Bag totals and exception decisions for one finalised flight.</summary>
     public sealed class FlightSummary
     {
         public required Flight Flight { get; init; }
@@ -72,6 +77,7 @@ public class SummaryReportModel : PageModel
         public int Loaded { get; init; }
         public int Unloaded { get; init; }
         public required IReadOnlyList<BaggageException> Exceptions { get; init; }
+        /// <summary>Number of distinct bags with exceptions, regardless of how many issues each has.</summary>
         public int ExceptionBags => Exceptions.Select(item => item.BagId).Distinct().Count();
     }
 }

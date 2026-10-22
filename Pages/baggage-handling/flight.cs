@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AeroLink.Pages;
 
+/// <summary>Manages bag status changes and supervisor exception approvals for one flight.</summary>
 public class FlightModel : PageModel
 {
     private static readonly Dictionary<string, string> Airports = new(StringComparer.OrdinalIgnoreCase)
@@ -24,6 +25,7 @@ public class FlightModel : PageModel
 
     private readonly BaggageHandlingContext _db;
 
+    /// <summary>Uses the manifest database to load and save baggage decisions.</summary>
     public FlightModel(BaggageHandlingContext db)
     {
         _db = db;
@@ -35,6 +37,7 @@ public class FlightModel : PageModel
     public bool IsSupervisor => User.IsInRole("BG_Supervisor");
     public bool CanUpdateBags => IsSupervisor || User.IsInRole("Baggage Handler");
 
+    /// <summary>Optional partial bag ID search, retained after updates and approvals.</summary>
     [BindProperty(SupportsGet = true)]
     public string? BagId { get; set; }
 
@@ -50,6 +53,8 @@ public class FlightModel : PageModel
     [BindProperty]
     public List<int> BagIds { get; set; } = [];
 
+    /// <summary>Loads the flight and its baggage for a signed-in user.</summary>
+    /// <param name="id">Manifest flight ID from the page route.</param>
     public async Task<IActionResult> OnGetAsync(int id)
     {
         if (User.Identity?.IsAuthenticated != true)
@@ -67,6 +72,8 @@ public class FlightModel : PageModel
         return Page();
     }
 
+    /// <summary>Validates and saves selected bag updates from a handler or supervisor.</summary>
+    /// <remarks>Exception bags cannot be completed here; their loading decision requires supervisor approval.</remarks>
     public async Task<IActionResult> OnPostAsync(int id)
     {
         if (User.Identity?.IsAuthenticated != true)
@@ -112,6 +119,12 @@ public class FlightModel : PageModel
         return RedirectToPage(new { id, bagId = BagId });
     }
 
+    /// <summary>Signs off an open exception, saving the decision, supervisor identity and justification.</summary>
+    /// <param name="id">Flight containing the bag.</param>
+    /// <param name="approvalBagId">Bag whose exceptions are being reviewed.</param>
+    /// <param name="decision">Load or KeepUnloaded.</param>
+    /// <param name="justification">Required explanation; surrounding whitespace is removed before saving.</param>
+    /// <returns>A redirect on success, the page for validation errors, or an access/not-found/bad-request result.</returns>
     public async Task<IActionResult> OnPostApproveAsync(int id, int approvalBagId, string decision, string? justification)
     {
         if (User.Identity?.IsAuthenticated != true)
@@ -168,6 +181,8 @@ public class FlightModel : PageModel
         return RedirectToPage(new { id, bagId = BagId });
     }
 
+    /// <summary>Marks a flight complete once every bag is loaded or approved unloaded and all exceptions are approved.</summary>
+    /// <remarks>Uses tracked changes; the calling handler saves the flight and bag decisions together.</remarks>
     private async Task UpdateLoadingStatusAsync(Flight flight)
     {
         var bags = await _db.Bags.Where(bag => bag.FlightId == flight.FlightId).ToListAsync();
@@ -178,6 +193,7 @@ public class FlightModel : PageModel
             && exceptions.All(item => BagRow.IsApproved(item)) ? "Complete" : "Started";
     }
 
+    /// <summary>Builds the flight totals and bag rows, applying the search only to the displayed rows.</summary>
     private async Task LoadAsync(Flight flight)
     {
         Flight = flight;
@@ -194,12 +210,15 @@ public class FlightModel : PageModel
             : rows.Where(row => row.Bag.BagId.ToString().Contains(search, StringComparison.Ordinal)).ToList();
     }
 
+    /// <summary>Resolves known airport names, falling back to the supplied code.</summary>
     private static string AirportName(string code) =>
         Airports.TryGetValue(code, out var name) ? name : code;
 }
 
+/// <summary>Flight details and loading totals shown above the baggage table.</summary>
 public sealed class FlightCard
 {
+    /// <summary>Counts loaded bags, excluding pending approvals and bags approved to remain unloaded.</summary>
     public FlightCard(Flight flight, string originName, string destinationName, IReadOnlyList<BagRow> bags)
     {
         Flight = flight;
@@ -216,8 +235,10 @@ public sealed class FlightCard
     public int Total { get; }
 }
 
+/// <summary>Combines a bag with its exception reasons and supervisor approval for display.</summary>
 public sealed class BagRow
 {
+    /// <summary>Shows unresolved missing or damaged issues in preference to the bag's stored outcome.</summary>
     public BagRow(Bag bag, IReadOnlyList<BaggageException>? exceptions)
     {
         Bag = bag;
@@ -241,10 +262,12 @@ public sealed class BagRow
     public bool HasException { get; }
     public string Reason { get; }
     public string Approval { get; }
+    /// <summary>Recognises the two final supervisor decisions used by loading and reporting.</summary>
     public static bool IsApproved(BaggageException exception) => exception.Status is "ApprovedToLoad" or "KeptUnloaded";
     public bool IsSpecial => !string.Equals(Bag.HandlingType, "Standard", StringComparison.OrdinalIgnoreCase);
 }
 
+/// <summary>Validates a requested bag outcome and applies related exception changes.</summary>
 public sealed class BaggageStatusChange
 {
     private static readonly Dictionary<string, string> Categories = new()
@@ -253,6 +276,7 @@ public sealed class BaggageStatusChange
         ["Damaged"] = "DamagedBag"
     };
 
+    /// <summary>Collects the selected bags and normalises optional form values.</summary>
     public BaggageStatusChange(IReadOnlyList<Bag> bags, string? outcome, string? description)
     {
         Bags = bags;
@@ -267,6 +291,8 @@ public sealed class BaggageStatusChange
     public bool NeedsDescription => Outcome is "Missing" or "Damaged";
     public bool RequiresAcknowledgement => Bags.Any(bag => !string.Equals(bag.HandlingType, "Standard", StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Updates bag outcomes and creates or reopens exceptions, clearing previous sign-offs.</summary>
+    /// <remarks>The caller must validate the change and call SaveChangesAsync afterwards.</remarks>
     public async Task ApplyAsync(BaggageHandlingContext db, IReadOnlyList<BaggageException> exceptions)
     {
         var nextId = await db.Exceptions.MaxAsync(item => (int?)item.ExceptionId) ?? 0;

@@ -6,10 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AeroLink.Pages;
 
+/// <summary>Displays the current manifest and imports replacement Excel workbooks.</summary>
 public class BaggageHandlingModel : PageModel
 {
     private readonly BaggageHandlingContext _db;
 
+    /// <summary>Uses the manifest database for display and workbook imports.</summary>
     public BaggageHandlingModel(BaggageHandlingContext db)
     {
         _db = db;
@@ -24,6 +26,7 @@ public class BaggageHandlingModel : PageModel
     public string? Message { get; private set; }
     public bool ImportSucceeded { get; private set; }
 
+    /// <summary>Loads the manifest for signed-in users, or redirects to login.</summary>
     public async Task<IActionResult> OnGetAsync()
     {
         if (User.Identity?.IsAuthenticated != true) {
@@ -34,6 +37,8 @@ public class BaggageHandlingModel : PageModel
         return Page();
     }
 
+    /// <summary>Validates an uploaded workbook and replaces the current manifest in one transaction.</summary>
+    /// <remarks>A successful import replaces all flights, bags and exceptions, including previous approvals.</remarks>
     public async Task<IActionResult> OnPostImportAsync()
     {
         if (Workbook is null || Workbook.Length == 0)
@@ -81,6 +86,7 @@ public class BaggageHandlingModel : PageModel
         return Page();
     }
 
+    /// <summary>Refreshes the page's manifest records after a request or import attempt.</summary>
     private async Task LoadAsync()
     {
         Flights = await _db.Flights.OrderBy(flight => flight.FlightId).ToListAsync();

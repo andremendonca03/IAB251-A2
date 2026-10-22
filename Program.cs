@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Register Razor Pages, the HR API client and the current manifest database.
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<BaggageHandlingContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("BaggageHandlingDatabase")));
 
-// Register Cookie Authentication BEFORE builder.Build()
+// Store employee role and department claims in a 30-minute authentication cookie.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -32,7 +32,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Authentication MUST be placed BEFORE Authorization
+// Resolve the user's identity before evaluating access rules.
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -40,6 +40,7 @@ app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
 
+// Create the manifest schema on first run; this does not migrate an existing database.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BaggageHandlingContext>();

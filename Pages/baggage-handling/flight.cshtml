@@ -39,6 +39,7 @@
         </div>
     </form>
 
+    @* Bulk updates collect handling acknowledgement and an issue description when required. *@
     <form method="post" id="bag-status-form" class="bag-status">
         <div class="bag-actions">
             <input type="hidden" name="bagId" value="@Model.BagId" />
@@ -166,6 +167,7 @@
     </form>
 </div>
 
+@* Row controls target these separate forms to avoid nesting forms inside the bulk-update form. *@
 @if (Model.IsSupervisor)
 {
     @foreach (var row in Model.Bags.Where(row => row.NeedsApproval))
@@ -190,14 +192,17 @@
         let handlingConfirmed = false;
         let descriptionConfirmed = false;
 
+        /** Checks whether any selected bag requires handling acknowledgement. */
         function selectedSpecial() {
             return [...form.querySelectorAll(".bag-check:checked")].some((box) => box.dataset.special === "true");
         }
 
+        /** Missing and damaged outcomes need an explanation before submission. */
         function needsDescription() {
             return outcome.value === "Missing" || outcome.value === "Damaged";
         }
 
+        /** Clears a cancelled change so its acknowledgement cannot carry into another update. */
         function resetOutcome() {
             outcome.selectedIndex = 0;
             acknowledge.value = "";
@@ -205,6 +210,7 @@
             description.classList.remove("is-invalid");
         }
 
+        /** Enables status changes only when at least one bag is selected. */
         function syncStatus() {
             outcome.disabled = form.querySelector(".bag-check:checked") === null;
             if (outcome.disabled) {
@@ -212,6 +218,7 @@
             }
         }
 
+        /** Opens the issue-description step for the currently selected outcome. */
         function openDescription() {
             document.getElementById("description-title").textContent = outcome.value + " baggage";
             descriptionConfirmed = false;
@@ -219,6 +226,7 @@
             description.focus();
         }
 
+        // Collect acknowledgement first, then an issue description; the server validates both again.
         form.addEventListener("change", (event) => {
             if (event.target === outcome && outcome.value) {
                 if (selectedSpecial()) {

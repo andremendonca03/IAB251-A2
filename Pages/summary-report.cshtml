@@ -9,6 +9,7 @@
 <h1>Loading Summary Report</h1>
 <p class="text-muted">Generated @Model.GeneratedAtUtc.ToString("dd MMM yyyy HH:mm") UTC. Includes finalised flights from the current manifest.</p>
 
+@* The page model supplies only finalised flights; exception reasons and decisions remain separate. *@
 @if (Model.Reports.Count == 0)
 {
     <div class="alert alert-info" role="status">

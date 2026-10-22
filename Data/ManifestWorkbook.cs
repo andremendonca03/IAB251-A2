@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 
 namespace AeroLink.Data;
 
+/// <summary>Parsed workbook records ready to replace the current manifest.</summary>
 public sealed class ManifestImport
 {
     public required List<Flight> Flights { get; init; }
@@ -10,11 +11,14 @@ public sealed class ManifestImport
     public required List<BaggageException> Exceptions { get; init; }
 }
 
+/// <summary>Reports a workbook validation problem that can be shown on the import page.</summary>
 public sealed class ManifestFormatException : Exception
 {
+    /// <summary>Creates an error describing the invalid sheet, column or value.</summary>
     public ManifestFormatException(string message) : base(message) { }
 }
 
+/// <summary>Reads the Flights, Bags and Exceptions sheets from an Excel manifest.</summary>
 public static class ManifestWorkbook
 {
     private static readonly string[] FlightColumns =
@@ -33,6 +37,10 @@ public static class ManifestWorkbook
         "ExceptionId", "BagId", "FlightId", "Category", "Description", "Status", "DecisionReason"
     ];
 
+    /// <summary>Parses workbook records without changing the database.</summary>
+    /// <param name="stream">Uploaded .xlsx content; the caller retains ownership of the stream.</param>
+    /// <returns>Validated records from all three required sheets.</returns>
+    /// <exception cref="ManifestFormatException">The workbook, required headers or cell values are invalid.</exception>
     public static ManifestImport Read(Stream stream)
     {
         using var buffer = new MemoryStream();
@@ -58,6 +66,7 @@ public static class ManifestWorkbook
         }
     }
 
+    /// <summary>Finds a required sheet by its exact name.</summary>
     private static IXLWorksheet Sheet(XLWorkbook workbook, string name)
     {
         var sheet = workbook.Worksheets.FirstOrDefault(worksheet => worksheet.Name == name);
@@ -69,6 +78,7 @@ public static class ManifestWorkbook
         return sheet;
     }
 
+    /// <summary>Maps case-sensitive headers to columns and rejects missing required headers.</summary>
     private static Dictionary<string, int> HeaderMap(IXLWorksheet sheet, string[] required)
     {
         var header = sheet.Row(1);
@@ -94,6 +104,7 @@ public static class ManifestWorkbook
         return map;
     }
 
+    /// <summary>Reads flight details and rejects duplicate flight IDs within the sheet.</summary>
     private static List<Flight> ReadFlights(IXLWorksheet sheet)
     {
         var columns = HeaderMap(sheet, FlightColumns);
@@ -125,6 +136,7 @@ public static class ManifestWorkbook
         return flights;
     }
 
+    /// <summary>Reads bag details and rejects duplicate bag IDs within the sheet.</summary>
     private static List<Bag> ReadBags(IXLWorksheet sheet)
     {
         var columns = HeaderMap(sheet, BagColumns);
@@ -154,6 +166,7 @@ public static class ManifestWorkbook
         return bags;
     }
 
+    /// <summary>Reads exception details and rejects duplicate exception IDs within the sheet.</summary>
     private static List<BaggageException> ReadExceptions(IXLWorksheet sheet)
     {
         var columns = HeaderMap(sheet, ExceptionColumns);
@@ -184,6 +197,7 @@ public static class ManifestWorkbook
         return exceptions;
     }
 
+    /// <summary>Skips the header and rows that are empty across all mapped columns.</summary>
     private static IEnumerable<IXLRow> DataRows(IXLWorksheet sheet, IReadOnlyDictionary<string, int> columns)
     {
         var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 1;
@@ -197,6 +211,7 @@ public static class ManifestWorkbook
         }
     }
 
+    /// <summary>Accepts whole-number IDs from numeric or text cells and rejects other values.</summary>
     private static int ReadInt(IXLRow row, IReadOnlyDictionary<string, int> columns, string name)
     {
         var cell = row.Cell(columns[name]);
@@ -225,6 +240,7 @@ public static class ManifestWorkbook
             $"{row.Worksheet.Name} row {row.RowNumber()} has a {name} that is not a whole number.");
     }
 
+    /// <summary>Reads trimmed text and rejects blank required values.</summary>
     private static string ReadRequiredText(IXLRow row, IReadOnlyDictionary<string, int> columns, string name)
     {
         var text = ReadText(row, columns, name);
@@ -236,12 +252,14 @@ public static class ManifestWorkbook
         return text;
     }
 
+    /// <summary>Reads optional trimmed text, returning an empty string for an empty cell.</summary>
     private static string ReadText(IXLRow row, IReadOnlyDictionary<string, int> columns, string name)
     {
         var cell = row.Cell(columns[name]);
         return cell.IsEmpty() ? string.Empty : cell.GetString().Trim();
     }
 
+    /// <summary>Reads a departure date or Excel date serial and treats its value as UTC.</summary>
     private static DateTime ReadDate(IXLRow row, IReadOnlyDictionary<string, int> columns)
     {
         var cell = row.Cell(columns["ScheduledDepartureUtc"]);

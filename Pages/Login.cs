@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace AeroLink.Pages;
 
-/// Page model handling employee authentication against the HR system API (User Story T2).
+/// <summary>Matches employee ID and email against the HR API and creates an authentication cookie.</summary>
 public class LoginModel : PageModel
 {
     // Note to tutor: this is a local API endpoint copied from the HR System - nothing was changed.
@@ -16,28 +16,30 @@ public class LoginModel : PageModel
 
     private readonly IHttpClientFactory _httpClientFactory;
 
+    /// <summary>Uses the registered HTTP client factory to contact the HR service.</summary>
     public LoginModel(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
     }
 
-    /// Gets or sets the employee ID entered during login.
+    /// <summary>Employee ID entered on the login form.</summary>
     [BindProperty]
     [Required(ErrorMessage = "Employee ID is required.")]
     public string EmployeeId { get; set; } = string.Empty;
 
-    /// Gets or sets the employee email address entered during login.
+    /// <summary>Employee email matched case-insensitively against the HR record.</summary>
     [BindProperty]
     [Required(ErrorMessage = "Email address is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]
     public string Email { get; set; } = string.Empty;
 
-    /// Gets or sets any error message encountered during the authentication process.
+    /// <summary>Validation or service error displayed after an unsuccessful login.</summary>
     public string? ErrorMessage { get; set; }
 
+    /// <summary>Displays the login form without contacting the HR service.</summary>
     public void OnGet() { }
 
-    /// Handles the HTTP POST request to validate credentials via the HR API 
+    /// <summary>Validates form values, matches the HR employee and stores role and department claims.</summary>
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
@@ -91,7 +93,7 @@ public class LoginModel : PageModel
         }
     }
 
-    // DTO for the department response from the HR API
+    /// <summary>Department and employee list returned by the HR departments endpoint.</summary>
     private sealed class DepartmentResponse
     {
         public int DepartmentId { get; set; }
@@ -100,7 +102,7 @@ public class LoginModel : PageModel
         public List<EmployeeResponse> Employees { get; set; } = [];
     }
 
-    // DTO for the employee response from the HR API
+    /// <summary>HR employee fields needed for login and access checks.</summary>
     private sealed class EmployeeResponse
     {
         public int EmployeeId { get; set; }
