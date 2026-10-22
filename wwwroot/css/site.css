@@ -230,6 +230,11 @@ body {
   line-height: 1.4;
 }
 
+.status-badge.started {
+  background: #f0a202;
+  color: var(--aerolink-navy);
+}
+
 .status-badge.complete {
   background: #1f9d55;
   color: #fff;
@@ -350,6 +355,62 @@ body {
 
 .bag-status .data-table-wrap {
   grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.baggage-table {
+  width: 100%;
+  table-layout: fixed;
+  font-size: 0.875rem;
+}
+
+.baggage-table thead th,
+.baggage-table tbody td {
+  padding: 0.65rem 0.4rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.baggage-table .btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  white-space: normal;
+}
+
+.baggage-table textarea {
+  resize: vertical;
+}
+
+@media (max-width: 767px) {
+  .flight-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .baggage-table colgroup,
+  .baggage-table thead {
+    display: none;
+  }
+
+  .baggage-table,
+  .baggage-table tbody,
+  .baggage-table tr,
+  .baggage-table tbody td {
+    display: block;
+    width: 100%;
+    text-align: left !important;
+  }
+
+  .baggage-table tr + tr {
+    border-top: 2px solid var(--aerolink-navy);
+  }
+
+  .baggage-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
 }
 
 .bag-check-col {

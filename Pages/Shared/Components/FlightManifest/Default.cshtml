@@ -46,7 +46,7 @@
                         <td>@flight.ArrivalAirport</td>
                         <td>@flight.ScheduledDepartureUtc.ToString("dd MMM yyyy HH:mm")</td>
                         <td>@flight.AircraftId</td>
-                        <td><span class="status-badge">@flight.LoadingStatus</span></td>
+                        <td><span class="status-badge @flight.LoadingStatus.ToLowerInvariant()">@flight.LoadingStatus</span></td>
                     </tr>
                 }
             }
